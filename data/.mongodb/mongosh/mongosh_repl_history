@@ -1,0 +1,16 @@
+db.Auth("admin", "admin")
+db.auth("admin", "admin")
+show dbs
+show users
+show user
+use admin
+show users
+mongo admin -u mongoadmin -p bdung
+db.newdb.insertOne({"idsf":"q"})
+db.newdb.insertOne({"idsf":q})
+show dbs
+db.newdb
+show dbs
+show db
+show users
+db.getUsers()

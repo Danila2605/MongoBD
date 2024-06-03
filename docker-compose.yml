@@ -1,0 +1,13 @@
+services:
+  app:
+    build: ./
+    ports:
+      - 8080:8080
+  mongo:
+    container_name: db_db
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: my-user
+      MONGO_INITDB_ROOT_PASSWORD: my-password
+    

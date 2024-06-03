@@ -1,0 +1,466 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>MongoProject</title>
+    <style>
+        td {
+            padding: 5px;
+        }
+
+        button {
+            margin: 7px;
+        }
+    </style>
+</head>
+<body>
+    <div id="acc">
+        <input type="text" id="login" />
+        <input type="password" id="password" />
+        <button id="autorisation">зайти</button>
+    </div>
+    <div id="inf" hidden>
+        <h2>Список работников</h2>
+        <div>
+            <input type="hidden" id="workerId" />
+            <p>
+                Имя:<br />
+                <input id="workerName" />
+            </p>
+            <p>
+                Возраст:<br />
+                <input id="workerAge" type="number" />
+            </p>
+            <p>
+                Должность:<br />
+                <input id="workerPost" />
+            </p>
+            <p>
+                Зарплата:<br />
+                <input id="workerSalary" type="number" />
+            </p>
+            <p>
+                <button id="saveBtn">Сохранить</button>
+                <button id="resetBtn">Сбросить</button>
+            </p>
+        </div>
+        <button id="getWorkers">Получить рабочих</button>
+        <button id="getCountWorkers">Сортировка по должности</button>
+        <button id="getBySalary">Сортировка по зарплате</button>
+        <button id="getcountworkersonpost">Количество сотрудников в должностях</button>
+        <button id="avgSalaryOnPost">Мининальная, максимальная и средняя зарплата</button>
+        <button id="avgAgeBtn">Средний возраст на должности</button>
+
+        <table hidden id="tb1">
+
+            <thead><tr><th>Имя</th><th>Возраст</th><th>Должность</th><th>Зарплата</th><th></th></tr></thead>
+            <tbody>
+            </tbody>
+        </table>
+
+        <table hidden id="tb2">
+
+            <thead><tr><th>Должность</th><th>Количество работников</th><th></th></tr></thead>
+            <tbody id="counter">
+            </tbody>
+        </table>
+
+        <table hidden id="tb3">
+
+            <thead><tr><th>Должность</th><th>Мининальная зарплата  </th><th>Максимальная зарплата  </th><th>Средняя зарплата  </th><th></th></tr></thead>
+            <tbody hidden id="avgMinMax">
+            </tbody>
+        </table>
+
+        <table hidden id="tb4">
+
+            <thead><tr><th>Должность</th><th>Средний возраст работников</th><th></th></tr></thead>
+            <tbody hidden id="avgAge">
+            </tbody>
+        </table>
+
+    </div>
+    <script>
+        async function Autorisation(login, password) {
+            const response = await fetch(`/api/account/${login}/${password}`, {
+                method: "GET",
+                headers: { "Accept": "application/json" },
+                
+            });
+            if (response.ok === true) {
+                document.getElementById("inf").hidden = false;
+                document.getElementById("acc").hidden = true;
+            }
+        }
+            
+    // Получение всех работников
+        async function getWorkers() {
+            // отправляет запрос и получаем ответ
+            const response = await fetch("/api/workers", {
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+            // если запрос прошел нормально
+            if (response.ok === true) {
+                // получаем данные
+                const workers = await response.json();
+                
+                const old_rows = document.querySelector("tbody");
+                const new_rows = document.createElement('tbody');
+                old_rows.parentNode.replaceChild(new_rows, old_rows)
+                // добавляем полученные элементы в таблицу
+                workers.forEach(worker => new_rows.append(row(worker)));
+
+                showTable(1);
+            }
+        }
+        // Получение кол-во работников на должности
+        async function getCountWorkersOnPost() {
+            const response = await fetch("/api/workers/countonpost", {
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+            if (response.ok === true) {
+
+                showTable(2)
+                const counts = await response.json();
+
+                const old_rows = document.getElementById("counter");;
+                const new_rows = document.createElement('tbody');
+                old_rows.parentNode.replaceChild(new_rows, old_rows)
+                counts.forEach(count => new_rows.append(counterRow(count)));
+
+            }
+        }
+
+        //===========================================
+        async function getMinMaxAvgSalary() {
+            const response = await fetch("/api/workers/minmaxavgsalaryonpost", {
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+
+            if (response.ok === true) {
+                showTable(3)
+                const objs = await response.json();
+
+                const old_rows = document.getElementById("avgMinMax");;
+                const new_rows = document.createElement('tbody');
+                old_rows.parentNode.replaceChild(new_rows, old_rows)
+
+                objs.forEach(obj => new_rows.append(AMMRow(obj)))
+
+                
+            }
+        }
+        //===========================================
+
+        //***********************
+        async function getAvgAge() {
+            const response = await fetch("/api/workers/avgage", {
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+
+            if (response.ok === true) {
+                showTable(4)
+                const objs = await response.json();
+
+                const old_rows = document.getElementById("avgAge");;
+                const new_rows = document.createElement('tbody');
+                old_rows.parentNode.replaceChild(new_rows, old_rows)
+
+                objs.forEach(obj => new_rows.append(avgAgeRow(obj)))
+
+                
+            }
+        }
+        //***********************
+        async function getSortByPostWorkers() {
+            const response = await fetch(`/api/workers/sortbypost`, {
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+            if (response.ok === true) {
+                const workers = await response.json();
+
+                const old_rows = document.querySelector("tbody");
+                const new_rows = document.createElement('tbody');
+                old_rows.parentNode.replaceChild(new_rows, old_rows)
+                // добавляем полученные элементы в таблицу
+                workers.forEach(worker => new_rows.append(row(worker)));
+
+                showTable(1)
+            }
+        }
+
+        async function getSortBySalaryWorkers() {
+            const response = await fetch(`/api/workers/sortbysalary`, {
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+            if (response.ok === true) {
+                const workers = await response.json();
+
+                const old_rows = document.querySelector("tbody");
+                const new_rows = document.createElement('tbody');
+                old_rows.parentNode.replaceChild(new_rows, old_rows)
+                // добавляем полученные элементы в таблицу
+                workers.forEach(worker => new_rows.append(row(worker)));
+
+                showTable(1)
+            }
+        }
+        // Получение одного работника
+        async function getWorker(id) {
+            const response = await fetch(`/api/workers/${id}`, {
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+            if (response.ok === true) {
+                const worker = await response.json();
+                document.getElementById("workerId").value = worker.id;
+                document.getElementById("workerName").value = worker.name;
+                document.getElementById("workerAge").value = worker.age;
+                document.getElementById("workerPost").value = worker.post;
+                document.getElementById("workerSalary").value = worker.salary;
+            }
+            else {
+                // если произошла ошибка, получаем сообщение об ошибке
+                const error = await response.json();
+                console.log(error.message); // и выводим его на консоль
+            }
+        }
+        // Добавление работника
+        async function createWorker(workerName, workerAge, workerPost, workerSalary) {
+
+            const response = await fetch("/api/workers", {
+                method: "POST",
+                headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: workerName,
+                    age: parseInt(workerAge, 10),
+                    post: workerPost,
+                    salary: parseInt(workerSalary, 10)
+                })
+            });
+            if (response.ok === true) {
+                const worker = await response.json();
+                document.querySelector("tbody").append(row(worker));
+            }
+            else {
+                const error = await response.json();
+                console.log(error.message);
+            }
+        }
+        // Изменение работника
+        async function editWorker(workerId, workerName, workerAge, workerPost, workerSalary) {
+            const response = await fetch("/api/workers", {
+                method: "PUT",
+                headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    id: workerId,
+                    name: workerName,
+                    age: parseInt(workerAge, 10),
+                    post: workerPost,
+                    salary: parseInt(workerSalary, 10)
+                })
+            });
+            if (response.ok === true) {
+                const worker = await response.json();
+                document.querySelector(`tr[data-rowid='${worker.id}']`).replaceWith(row(worker));
+            }
+            else {
+                const error = await response.json();
+                console.log(error.message);
+            }
+        }
+        // Удаление работника
+        async function deleteWorker(id) {
+            const response = await fetch(`/api/workers/${id}`, {
+                method: "DELETE",
+                headers: { "Accept": "application/json" }
+            });
+            if (response.ok === true) {
+                const worker = await response.json();
+                document.querySelector(`tr[data-rowid='${worker.id}']`).remove();
+            }
+            else {
+                const error = await response.json();
+                console.log(error.message);
+            }
+        }
+
+        // сброс данных формы после отправки
+        function reset() {
+            document.getElementById("workerId").value = "";
+            document.getElementById("workerName").value = "";
+            document.getElementById("workerAge").value = "";
+            document.getElementById("workerPost").value = "";
+            document.getElementById("workerSalary").value = "";
+        }
+
+        // создание строк для таблиц
+        function counterRow(count) {
+            const tr = document.createElement("tr");
+            tr.setAttribute("data-rowid", count.id);
+
+            const idTd = document.createElement("td");
+            idTd.append(count.id);
+            tr.append(idTd);
+
+            const countTd = document.createElement("td");
+            countTd.append(count.count);
+            tr.append(countTd);
+
+            return tr;
+        }
+        function AMMRow(obj) {
+            const tr = document.createElement("tr");
+            tr.setAttribute("data-rowid", obj.id);
+
+            const idTd = document.createElement("td");
+            idTd.append(obj.id);
+            tr.append(idTd);
+
+            const minTd = document.createElement("td");
+            minTd.append(obj.min);
+            tr.append(minTd);
+
+            const maxTd = document.createElement("td");
+            maxTd.append(obj.max);
+            tr.append(maxTd);
+
+            const avgTd = document.createElement("td");
+            avgTd.append(obj.avg);
+            tr.append(avgTd);
+
+            return tr;
+        }
+        function avgAgeRow(age) {
+            const tr = document.createElement("tr");
+            tr.setAttribute("data-rowid", age.id);
+
+            const idTd = document.createElement("td");
+            idTd.append(age.id);
+            tr.append(idTd);
+
+            const avgTd = document.createElement("td");
+            avgTd.append(age.avg);
+            tr.append(avgTd);
+
+            return tr;
+        }
+
+        function showTable(num) {
+            document.getElementById("tb1").hidden = true;
+            document.getElementById("tb2").hidden = true;
+            document.getElementById("tb3").hidden = true;
+            document.getElementById("tb4").hidden = true;
+
+            switch (num) {
+                case 1:
+                    document.getElementById("tb1").hidden = false;
+                    break;
+                case 2:
+                    document.getElementById("tb2").hidden = false;
+                    break;
+                case 3:
+                    document.getElementById("tb3").hidden = false;
+                    break;
+                case 4:
+                    document.getElementById("tb4").hidden = false;
+                    break;
+            }
+        }
+        
+        function row(worker) {
+
+            const tr = document.createElement("tr");
+            tr.setAttribute("data-rowid", worker.id);
+
+            const nameTd = document.createElement("td");
+            nameTd.append(worker.name);
+            tr.append(nameTd);
+
+            const ageTd = document.createElement("td");
+            ageTd.append(worker.age);
+            tr.append(ageTd);
+
+            const postTd = document.createElement("td");
+            postTd.append(worker.post);
+            tr.append(postTd);
+
+            const salaryTd = document.createElement("td");
+            salaryTd.append(worker.salary);
+            tr.append(salaryTd);
+
+            const linksTd = document.createElement("td");
+
+            const editLink = document.createElement("button");
+            editLink.append("Изменить");
+            editLink.addEventListener("click", async () => await getWorker(worker.id));
+            linksTd.append(editLink);
+
+            const removeLink = document.createElement("button");
+            removeLink.append("Удалить");
+            removeLink.addEventListener("click", async () => await deleteWorker(worker.id));
+
+            linksTd.append(removeLink);
+            tr.appendChild(linksTd);
+
+            return tr;
+        }
+
+        document.getElementById("avgAgeBtn").addEventListener("click", () => {
+            getAvgAge();
+        })
+            // авторизация
+        document.getElementById("autorisation").addEventListener("click", () => {
+                const login = document.getElementById("login").value;
+                const password = document.getElementById("password").value;
+
+                Autorisation(login, password);
+ 
+            })
+
+        document.getElementById("avgSalaryOnPost").addEventListener("click", () => {
+            getMinMaxAvgSalary()
+        })
+
+        document.getElementById("getCountWorkers").addEventListener("click", () => {
+            getSortByPostWorkers();
+        })
+
+        document.getElementById("getcountworkersonpost").addEventListener("click", () => {
+            getCountWorkersOnPost();
+        })
+
+        document.getElementById("getBySalary").addEventListener("click", () => {
+            getSortBySalaryWorkers();
+        })
+
+        document.getElementById("getWorkers").addEventListener("click", () => {
+            getWorkers();
+        })
+
+        // сброс значений формы
+        document.getElementById("resetBtn").addEventListener("click", () =>  reset());
+
+        // отправка формы
+        document.getElementById("saveBtn").addEventListener("click", async () => {
+
+            const id = document.getElementById("workerId").value;
+            const name = document.getElementById("workerName").value;
+            const age = document.getElementById("workerAge").value;
+            const post = document.getElementById("workerPost").value;
+            const salary = document.getElementById("workerSalary").value;
+            if (id === "")
+                await createWorker(name, age, post, salary);
+            else
+                await editWorker(id, name, age, post, salary);
+            reset();
+        });        
+    </script>
+</body>
+</html>
